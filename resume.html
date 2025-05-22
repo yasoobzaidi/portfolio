@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap" rel="stylesheet" />
+  <title>Video Background Only</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      font-family: "Fjalla One", sans-serif;
+      height: 100%;
+      overflow: hidden;
+    }
+    #bg-vdo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      filter: blur(8px);
+      z-index: -2;
+    }
+    .vignette {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(0, 0, 0, 0) 40%,
+        rgba(0, 0, 0, 0.5) 70%,
+        rgba(0, 0, 0, 0.8) 100%
+      );
+      z-index: -1;
+      pointer-events: none;
+    }
+    /* Animate Home Button */
+    .home-btn {
+      position: fixed;
+      top: 48px;
+      left: 48px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      opacity: 0;
+      transform: translateX(-60px);
+      filter: blur(8px) brightness(1.12);
+      transition: filter 0.2s;
+    }
+    .home-btn.visible {
+      animation: home-slide-in 0.7s cubic-bezier(.25,1.5,.5,1) forwards;
+      animation-delay: 1.05s;
+    }
+    @keyframes home-slide-in {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+        filter: blur(0) brightness(1);
+      }
+    }
+    .home-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #e0e0e0;
+      filter: drop-shadow(0 0 2px #aaa);
+      transition: filter 0.2s, fill 0.2s;
+      display: block;
+    }
+    .home-btn:hover svg {
+      filter: drop-shadow(0 0 4px #ccc);
+      fill: #fff;
+    }
+
+    /* Animate Resume Button */
+    .resume-btn {
+      position: fixed;
+      top: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: 8px 28px;
+      background: rgba(255,255,255,0.015);
+      color: #faf8ff;
+      border-radius: 12px;
+      font-size: 1.09rem;
+      font-family: inherit;
+      font-weight: 500;
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      border: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      box-shadow:
+        0 0.5px 0 #ffffff13,
+        0 0 0 1px rgba(255,255,255,0.02) inset,
+        0 2px 8px 0 rgba(30,10,40,0.02),
+        inset 2px 2px 8px 0 rgba(255,255,255,0.03),
+        inset -2px -2px 8px 0 rgba(36,20,50,0.02);
+      transition:
+        background 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.26s;
+      cursor: pointer;
+      outline: none;
+      display: inline-block;
+      text-align: center;
+      user-select: none;
+      opacity: 0;
+      filter: blur(8px) brightness(1.12);
+      transform: translateX(-50%) translateY(-60px);
+    }
+    .resume-btn.visible {
+      animation: resume-drop-in 0.8s cubic-bezier(.25,1.5,.5,1) forwards;
+      animation-delay: 1.35s;
+    }
+    @keyframes resume-drop-in {
+      to {
+        opacity: 1;
+        filter: blur(0) brightness(1);
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+    .resume-btn:hover,
+    .resume-btn:focus {
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      border-color: rgba(255,255,255,0.14);
+      box-shadow:
+        0 1px 0 #fff1,
+        0 0 0 1.2px rgba(255,255,255,0.07) inset,
+        0 4px 16px 0 rgba(30,10,40,0.04),
+        inset 2.5px 2.5px 10px 0 rgba(255,255,255,0.06),
+        inset -2.5px -2.5px 10px 0 rgba(36,20,50,0.04);
+      /* Arrow fade out on hover handled below */
+    }
+
+    /* Resume Download Indicator (Arrow) */
+    .resume-indicator {
+      position: fixed;
+      left: 50%;
+      top: 90px; /* 42px (button top) + ~38px (button height + padding + border) + 10px gap */
+      transform: translateX(-50%);
+      width: 28px;
+      height: 28px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 11;
+      fill: #fff;
+      filter: drop-shadow(0 0 7px #fff6);
+      display: block;
+      /* Initial glassmorphism animation state */
+      filter: blur(12px) brightness(1.15) drop-shadow(0 0 7px #fff6);
+      transform: translateX(-50%) translateY(10px) scale(0.92);
+      transition: filter 0.2s, opacity 0.2s, transform 0.2s;
+    }
+    .resume-btn.visible ~ .resume-indicator {
+      animation:
+        resume-drop-in-arrow 0.7s cubic-bezier(.25,1.5,.5,1) forwards 1.55s,
+        bounce-arrow 1.1s 2.4s infinite cubic-bezier(.5,1.5,.5,1);
+      opacity: 0.88;
+    }
+    .resume-btn:hover ~ .resume-indicator,
+    .resume-btn:focus ~ .resume-indicator {
+      /* fade out with same glassy effect as button */
+      opacity: 0;
+      filter: blur(10px) brightness(1.2) drop-shadow(0 0 7px #fff6);
+      transform: translateX(-50%) translateY(15px) scale(0.96);
+      transition: filter 0.22s, opacity 0.22s, transform 0.22s;
+    }
+    @keyframes resume-drop-in-arrow {
+      to {
+        opacity: 0.88;
+        filter: blur(0) brightness(1) drop-shadow(0 0 7px #fff7);
+        transform: translateX(-50%) translateY(0) scale(1);
+      }
+    }
+    @keyframes bounce-arrow {
+      0%   { transform: translateX(-50%) translateY(0) scale(1); }
+      30%  { transform: translateX(-50%) translateY(9px) scale(1.08); }
+      60%  { transform: translateX(-50%) translateY(0) scale(1); }
+      100% { transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    /* Glassmorphic Info Sections Side by Side, Responsive */
+    .glass-info-row {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      width: 80vw;
+      max-width: 950px;
+      display: flex;
+      gap: 28px;
+      justify-content: center;
+      z-index: 5;
+      pointer-events: none;
+      transition: top 0.3s;
+    }
+    .glass-info-col {
+      flex: 1 1 0;
+      min-width: 220px;
+      max-width: 430px;
+      padding: 30px 28px 24px 28px;
+      background: rgba(255,255,255,0.018);
+      border-radius: 16px;
+      border: 1.2px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(18px) saturate(130%);
+      -webkit-backdrop-filter: blur(18px) saturate(130%);
+      box-shadow:
+        0 1px 0 #ffffff13,
+        0 0 0 1px rgba(255,255,255,0.02) inset,
+        0 2px 8px 0 rgba(30,10,40,0.02),
+        inset 2px 2px 8px 0 rgba(255,255,255,0.03),
+        inset -2px -2px 8px 0 rgba(36,20,50,0.02);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      pointer-events: auto;
+      box-sizing: border-box;
+      transition: box-shadow 0.24s, background 0.2s;
+      opacity: 0;
+      transform: translateY(40px) scale(0.98);
+      filter: blur(8px) brightness(1.12);
+    }
+    .glass-info-col.animate-in {
+      animation: glass-appear 1.1s cubic-bezier(.25,1.5,.5,1) forwards;
+      animation-delay: 0.7s;
+    }
+    .glass-info-col:nth-child(2).animate-in {
+      animation-delay: 1s;
+    }
+    @keyframes glass-appear {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0) brightness(1);
+      }
+    }
+    .glass-info-col h2 {
+      font-size: 1.21rem;
+      letter-spacing: 0.03em;
+      color: #faf8ff;
+      margin-bottom: 16px;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(36,20,50,0.07);
+    }
+    .glass-info-col p {
+      color: #e0e0e0;
+      font-size: 1.04rem;
+      line-height: 1.6;
+      font-weight: 400;
+      text-shadow: 0 1px 4px rgba(36,20,50,0.08);
+      word-break: break-word;
+    }
+    @media (max-width: 950px) {
+      .glass-info-row {
+        width: 96vw;
+        max-width: 96vw;
+      }
+      .glass-info-col {
+        min-width: 0;
+        max-width: 100vw;
+      }
+    }
+    @media (max-width: 700px) {
+      .glass-info-row {
+        flex-direction: column;
+        gap: 22px;
+        width: 98vw;
+        max-width: 98vw;
+        top: 54%;
+        transform: translate(-50%,-50%);
+      }
+      .glass-info-col {
+        max-width: 100vw;
+        padding: 34px 9vw 28px 9vw;
+        border-radius: 18px;
+        box-shadow:
+          0 8px 32px 0 rgba(30,20,60,0.23),
+          0 1px 0 #ffffff13,
+          0 0 0 1px rgba(255,255,255,0.02) inset,
+          0 2px 8px 0 rgba(30,10,40,0.02),
+          inset 2px 2px 8px 0 rgba(255,255,255,0.03),
+          inset -2px -2px 8px 0 rgba(36,20,50,0.02);
+      }
+    }
+    @media (max-width: 480px) {
+      .glass-info-row {
+        top: 54%;
+        gap: 15px;
+        width: 99vw;
+      }
+      .glass-info-col {
+        padding: 22px 6vw 15px 6vw;
+        border-radius: 15px;
+        box-shadow:
+          0 8px 32px 0 rgba(30,20,60,0.23),
+          0 1px 0 #ffffff13,
+          0 0 0 1px rgba(255,255,255,0.02) inset,
+          0 2px 8px 0 rgba(30,10,40,0.02),
+          inset 2px 2px 8px 0 rgba(255,255,255,0.03),
+          inset -2px -2px 8px 0 rgba(36,20,50,0.02);
+      }
+      .glass-info-col h2 {
+        font-size: 1.07rem;
+        margin-bottom: 10px;
+      }
+      .glass-info-col p {
+        font-size: 0.97rem;
+      }
+    }
+    @media (max-width: 370px) {
+      .glass-info-col {
+        padding: 14px 3vw 8px 3vw;
+        border-radius: 10px;
+      }
+      .glass-info-col h2 {
+        font-size: 0.98rem;
+      }
+      .glass-info-col p {
+        font-size: 0.94rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Home Button Top Left - Icon Only with Minimal Glow -->
+<a href="/" class="home-btn" title="Home">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5-.5v1.293z"/>
+    <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/>
+  </svg>
+</a>
+
+<!-- Resume Button Top Center -->
+<a href="./resume.html" class="resume-btn" target="_blank" title="Resume">
+  Resume
+</a>
+<!-- Minimal Download Indicator (SVG, glassmorphic arrow) -->
+<svg class="resume-indicator" xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="white" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/>
+</svg>
+
+<!-- Glassmorphic About Sections -->
+<div class="glass-info-row">
+  <section class="glass-info-col" id="about-me">
+    <h2>About Me</h2>
+    <p>
+      Hi, I'm Yasoob Zaidi.<br>
+      I am passionate about building thoughtful products, automating workflows, and sharing knowledge. I love working at the intersection of design, technology, and usability.
+    </p>
+  </section>
+  <section class="glass-info-col" id="about-website">
+    <h2>About This Website</h2>
+    <p>
+      This is a minimal, focused website with a cinematic background and glassmorphic interface. It is designed to highlight my work and provide easy, elegant access to my resume and background.
+    </p>
+  </section>
+</div>
+
+<!-- Background Video -->
+<video id="bg-vdo" autoplay muted loop playsinline>
+  <source src="./media/bg vdo.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+<!-- Vignette Overlay -->
+<div class="vignette"></div>
+
+<script>
+  // Wait for full page load, then trigger all animations with proper delays
+  window.addEventListener('load', function() {
+    // About sections
+    setTimeout(function() {
+      document.querySelectorAll('.glass-info-col').forEach(function(el) {
+        el.classList.add('animate-in');
+      });
+    }, 700);
+
+    // Home icon: visible after abouts
+    setTimeout(function() {
+      document.querySelector('.home-btn').classList.add('visible');
+    }, 1050);
+
+    // Resume button: visible last
+    setTimeout(function() {
+      document.querySelector('.resume-btn').classList.add('visible');
+    }, 1350);
+  });
+</script>
+</body>
+</html>
